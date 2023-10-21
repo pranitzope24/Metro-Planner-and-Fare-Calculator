@@ -1,21 +1,17 @@
 package util;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.logging.Logger;
 
 public class Graph {
     static HashMap<String, Vertex> vertices;
-    private final Logger logger = Logger.getLogger(Graph.class.getName());
     public Graph() {
         vertices = new HashMap<>();
     }
+
     public class Vertex {
         HashMap<String, Integer> nbrs = new HashMap<>();
     }
-
-
 
     public int numberOfVertices() {
         return vertices.size();
