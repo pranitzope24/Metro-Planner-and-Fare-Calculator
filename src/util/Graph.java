@@ -1,20 +1,16 @@
 package util;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
 public class Graph {
-    static HashMap<String, Vertex> vertices;
+    private final HashMap<String, Vertex> vertices;
+
     public Graph() {
         vertices = new HashMap<>();
     }
 
-    public class Vertex {
+    public static class Vertex {
         HashMap<String, Integer> nbrs = new HashMap<>();
-    }
-
-    public int numberOfVertices() {
-        return vertices.size();
     }
 
     public boolean containsVertex(String vName) {
@@ -96,7 +92,7 @@ public class Graph {
         System.out.println("....................................");
     }
 
-    public boolean hasPath(String vName1, String vName2, HashMap<String,Boolean> proc) {
+    public boolean hasPath(String vName1, String vName2, Map<String,Boolean> proc) {
         if(containsEdge(vName1, vName2)) {
             return true;
         }
@@ -122,9 +118,53 @@ public class Graph {
         }
     }
 
-    public int dijkstra(String src, String dest, boolean nan) {
-        //complete once priority_queue is completed.
-        return 0; //rm
+    public int dijkstra(String src, String des, boolean nan) {
+        int val = 0;
+        ArrayList<String> ans = new ArrayList<>();
+        HashMap<String, DijkstraPair> map = new HashMap<>();
+        Heap<DijkstraPair> heap = new Heap<>();
+        for (String key : vertices.keySet()) {
+            DijkstraPair np = new DijkstraPair();
+            np.vName = key;
+            np.cost = Integer.MAX_VALUE;
+            if (key.equals(src)) {
+                np.cost = 0;
+                np.psf = key;
+            }
+            heap.add(np);
+            map.put(key, np);
+        }
+
+        while (!heap.isEmpty()) {
+            DijkstraPair rp = heap.remove();
+            if(rp.vName.equals(des)) {
+                val = rp.cost;
+                break;
+            }
+            map.remove(rp.vName);
+            ans.add(rp.vName);
+            Vertex v = vertices.get(rp.vName);
+            for (String nbr : v.nbrs.keySet()) {
+                if (map.containsKey(nbr)) {
+                    int oc = map.get(nbr).cost;
+                    Vertex k = vertices.get(rp.vName);
+                    int nc;
+                    if(nan) {
+                        nc = rp.cost + 120 + 40*k.nbrs.get(nbr);
+                    }
+                    else {
+                        nc = rp.cost + k.nbrs.get(nbr);
+                    }
+                    if (nc < oc) {
+                        DijkstraPair gp = map.get(nbr);
+                        gp.psf = rp.psf + nbr;
+                        gp.cost = nc;
+                        heap.updatePriority(gp);
+                    }
+                }
+            }
+        }
+        return val;
     }
 
     private class Pair {
@@ -132,6 +172,158 @@ public class Graph {
         String psf;
         int minDistance;
         int minTime;
+    }
+
+    public String getMinDistance(String src, String dst) {
+        int min = Integer.MAX_VALUE;
+        String ans = "";
+        HashMap<String, Boolean> processed = new HashMap<>();
+        LinkedList<Pair> stack = new LinkedList<>();
+        Pair sp = new Pair();
+        sp.vName = src;
+        sp.psf = src + "  ";
+        sp.minDistance = 0;
+        sp.minTime = 0;
+        stack.addFirst(sp);
+        while (!stack.isEmpty()) {
+            Pair rp = stack.removeFirst();
+            if (processed.containsKey(rp.vName)) {
+                continue;
+            }
+            processed.put(rp.vName, true);
+            if (rp.vName.equals(dst)) {
+                int temp = rp.minDistance;
+                if(temp<min) {
+                    ans = rp.psf;
+                    min = temp;
+                }
+                continue;
+            }
+            Vertex rpvtx = vertices.get(rp.vName);
+            ArrayList<String> nbrs = new ArrayList<>(rpvtx.nbrs.keySet());
+            for(String nbr : nbrs) {
+                if (!processed.containsKey(nbr)) {
+                    Pair np = new Pair();
+                    np.vName = nbr;
+                    np.psf = rp.psf + nbr + "  ";
+                    np.minDistance = rp.minDistance + rpvtx.nbrs.get(nbr);
+                    stack.addFirst(np);
+                }
+            }
+        }
+        ans = ans + Integer.toString(min);
+        return ans;
+    }
+
+
+    public String getMinTime(String src, String dst) {
+        int min = Integer.MAX_VALUE;
+        String ans = "";
+        HashMap<String, Boolean> processed = new HashMap<>();
+        LinkedList<Pair> stack = new LinkedList<>();
+        Pair sp = new Pair();
+        sp.vName = src;
+        sp.psf = src + "  ";
+        sp.minDistance = 0;
+        sp.minTime = 0;
+        stack.addFirst(sp);
+        while (!stack.isEmpty()) {
+            Pair rp = stack.removeFirst();
+            if (processed.containsKey(rp.vName)) {
+                continue;
+            }
+            processed.put(rp.vName, true);
+            if (rp.vName.equals(dst)) {
+                int temp = rp.minTime;
+                if(temp<min) {
+                    ans = rp.psf;
+                    min = temp;
+                }
+                continue;
+            }
+            Vertex rpvtx = vertices.get(rp.vName);
+            ArrayList<String> nbrs = new ArrayList<>(rpvtx.nbrs.keySet());
+            for (String nbr : nbrs) {
+                if (!processed.containsKey(nbr)) {
+                    Pair np = new Pair();
+                    np.vName = nbr;
+                    np.psf = rp.psf + nbr + "  ";
+                    np.minTime = rp.minTime + 120 + 40*rpvtx.nbrs.get(nbr);
+                    stack.addFirst(np);
+                }
+            }
+        }
+        double minutes = Math.ceil((double)min / 60);
+        ans = ans + Double.toString(minutes);
+        return ans;
+    }
+
+    public List<String> getInterchanges(String str) {
+        ArrayList<String> arr = new ArrayList<>();
+        String[] res = str.split(" {2}");
+        arr.add(res[0]);
+        int count = 0;
+        for(int i=1;i<res.length-1;i++) {
+            int index = res[i].indexOf('~');
+            String s = res[i].substring(index+1);
+            if(s.length()==2) {
+                String prev = res[i-1].substring(res[i-1].indexOf('~')+1);
+                String next = res[i+1].substring(res[i+1].indexOf('~')+1);
+                if(prev.equals(next)) {
+                    arr.add(res[i]);
+                }
+                else {
+                    arr.add(res[i]+" ==> "+res[i+1]);
+                    i++;
+                    count++;
+                }
+            }
+            else {
+                arr.add(res[i]);
+            }
+        }
+        arr.add(Integer.toString(count));
+        arr.add(res[res.length-1]);
+        return arr;
+    }
+
+    public static void createMetroMap(Graph g) {
+        g.addVertex("Noida Sector 62~B");
+        g.addVertex("Botanical Garden~B");
+        g.addVertex("Yamuna Bank~B");
+        g.addVertex("Rajiv Chowk~BY");
+        g.addVertex("Vaishali~B");
+        g.addVertex("Moti Nagar~B");
+        g.addVertex("Janak Puri West~BO");
+        g.addVertex("Dwarka Sector 21~B");
+        g.addVertex("Huda City Center~Y");
+        g.addVertex("Saket~Y");
+        g.addVertex("Vishwavidyalaya~Y");
+        g.addVertex("Chandni Chowk~Y");
+        g.addVertex("New Delhi~YO");
+        g.addVertex("AIIMS~Y");
+        g.addVertex("Shivaji Stadium~O");
+        g.addVertex("DDS Campus~O");
+        g.addVertex("IGI Airport~O");
+        g.addVertex("Jamia Millia Islamia");
+
+        g.addEdge("Noida Sector 62~B", "Botanical Garden~B", 8);
+        g.addEdge("Botanical Garden~B", "Yamuna Bank~B", 10);
+        g.addEdge("Yamuna Bank~B", "Vaishali~B", 8);
+        g.addEdge("Yamuna Bank~B", "Rajiv Chowk~BY", 6);
+        g.addEdge("Rajiv Chowk~BY", "Moti Nagar~B", 9);
+        g.addEdge("Moti Nagar~B", "Janak Puri West~BO", 7);
+        g.addEdge("Janak Puri West~BO", "Dwarka Sector 21~B", 6);
+        g.addEdge("Huda City Center~Y", "Saket~Y", 15);
+        g.addEdge("Saket~Y", "AIIMS~Y", 6);
+        g.addEdge("AIIMS~Y", "Rajiv Chowk~BY", 7);
+        g.addEdge("Rajiv Chowk~BY", "New Delhi~YO", 1);
+        g.addEdge("New Delhi~YO", "Chandni Chowk~Y", 2);
+        g.addEdge("Chandni Chowk~Y", "Vishwavidyalaya~Y", 5);
+        g.addEdge("New Delhi~YO", "Shivaji Stadium~O", 2);
+        g.addEdge("Shivaji Stadium~O", "DDS Campus~O", 7);
+        g.addEdge("DDS Campus~O", "IGI Airport~O", 8);
+        g.addEdge("IGI Airport~O","Jamia Millia Islamia", 15);
     }
 
 }

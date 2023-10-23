@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Heap<T extends Comparable<T>> {
-
     ArrayList<T> data = new ArrayList<>();
     HashMap<T,Integer> map = new HashMap<>();
 
@@ -30,10 +29,6 @@ public class Heap<T extends Comparable<T>> {
         data.set(j, ith);
         map.put(ith, j);
         map.put(jth, i);
-    }
-
-    public void display() {
-        System.out.println(data);
     }
 
     public int size() {
@@ -66,10 +61,6 @@ public class Heap<T extends Comparable<T>> {
             swap(minIndex, parIndex);
             downHeapify(minIndex);
         }
-    }
-
-    public T get() {
-        return this.data.get(0);
     }
 
     public int isLarger(T t1, T t2) {
